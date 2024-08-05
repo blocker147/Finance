@@ -1,0 +1,150 @@
+openapi: 3.0.0
+info:
+  title: Finance application aggregator API
+  version: v1
+  description: Finance API provides offers from different bank institutions
+servers:
+  - url: https://localhost:8080/api
+paths:
+  /applications:
+    post:
+      tags:
+        - FinanceApi
+      summary: Submit financing application
+      operationId: addApplication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+            example:
+              phoneNumber: '+37126000000'
+              email: john.doe@klix.app
+              monthlyIncomeAmount: 1000
+              amount: 150
+              monthlyCreditLiabilities: 0
+              dependents: 0
+              agreeToDataSharing: true
+              monthlyExpenses: 300
+              maritalStatus: SINGLE
+              agreeToBeScored: true
+      responses:
+        '200':
+          description: List of applications created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+        '400':
+          $ref: '#/components/responses/400'
+
+  '/applications/{id}':
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      tags:
+        - FinanceApi
+      summary: Find previously created application
+      description: Returns application with offer if already available
+      operationId: getApplicationById
+      responses:
+        '200':
+          $ref: '#/components/responses/Application'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+
+components:
+  parameters:
+    id:
+      name: id
+      required: true
+      in: path
+      description: Application ID (UUID)
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '400':
+      description: Bad request
+    '404':
+      description: Application not found
+    Application:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Application'
+  schemas:
+    ApplicationRequest:
+      required:
+        - phoneNumber
+        - email
+        - monthlyIncomeAmount
+        - amount
+        - monthlyCreditLiabilities
+        - dependents
+        - agreeToDataSharing
+        - monthlyExpenses
+        - maritalStatus
+        - agreeToBeScored
+      properties:
+        phoneNumber:
+          type: string
+          pattern: "\\+[0-9]{8,15}"
+        email:
+          type: string
+        monthlyIncomeAmount:
+          type: number
+        amount:
+          type: number
+        monthlyCreditLiabilities:
+          type: number
+        dependents:
+          type: integer
+        agreeToDataSharing:
+          type: boolean
+        monthlyExpenses:
+          type: number
+        maritalStatus:
+          type: string
+          enum:
+            - SINGLE
+            - MARRIED
+            - DIVORCED
+            - COHABITING
+        agreeToBeScored:
+          type: boolean
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          description: Application status
+          enum:
+            - DRAFT
+            - PROCESSED
+        offer:
+          $ref: '#/components/schemas/Offer'
+
+    Offer:
+      type: object
+      nullable: true
+      properties:
+        monthlyPaymentAmount:
+          type: number
+        totalRepaymentAmount:
+          type: number
+        numberOfPayments:
+          type: integer
+        annualPercentageRate:
+          type: number
+        firstRepaymentDate:
+          type: string
